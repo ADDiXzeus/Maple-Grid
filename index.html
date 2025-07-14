@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maple Grid - Coming Soon</title>
+    
+    <!-- Google Fonts Import: Orbitron for a sharp, futuristic style -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Exo+2:wght@400&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- Base Styles & Variables --- */
+        :root {
+            --color-bg: #01030a;
+            --color-particle: #5f9ea0;
+            --color-maple: #ff4d4d;
+            --color-line: rgba(95, 158, 160, 0.5);
+            --color-text-main: #ffffff;
+            --color-text-sub: #a0b3d1;
+            --font-title: 'Orbitron', sans-serif;
+            --font-body: 'Exo 2', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Prevents scrollbars */
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--color-bg);
+            color: var(--color-text-sub);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        
+        /* --- Interactive Particle Canvas --- */
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* --- Content Styling --- */
+        .hero-section {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            z-index: 2; /* Ensure content is above the canvas */
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            /* Add a subtle backdrop for readability */
+            background: radial-gradient(ellipse at center, rgba(2, 4, 18, 0.5), transparent 70%);
+            padding: 2rem;
+            border-radius: 1rem;
+        }
+
+        h1 {
+            font-family: var(--font-title);
+            font-size: clamp(2.5rem, 10vw, 6rem); /* Responsive font size */
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--color-text-main);
+            padding-left: 0.1em; /* Optical adjustment */
+        }
+
+        .sub-headline {
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            font-weight: 400;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            opacity: 0.8;
+            padding-left: 0.3em; /* Optical adjustment */
+        }
+
+        /* --- Email Form Styling --- */
+        .email-form {
+            margin-top: 2rem;
+            display: flex;
+            flex-wrap: wrap; /* Allows stacking on small screens */
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .email-input {
+            flex-grow: 1;
+            font-family: var(--font-body);
+            font-size: 1rem;
+            padding: 0.8rem 1.2rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(95, 158, 160, 0.4);
+            border-radius: 8px;
+            color: var(--color-text-sub);
+            outline: none;
+            transition: all 0.3s ease;
+            min-width: 200px; /* Ensure it doesn't get too small */
+        }
+
+        .email-input::placeholder {
+            color: rgba(160, 179, 209, 0.5);
+        }
+
+        .email-input:focus {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: var(--color-particle);
+            box-shadow: 0 0 15px rgba(95, 158, 160, 0.3);
+        }
+
+        .submit-button {
+            font-family: var(--font-title);
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 0.8rem 2rem;
+            border: 1px solid var(--color-particle);
+            background-color: transparent;
+            color: var(--color-particle);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-button:hover {
+            background-color: var(--color-particle);
+            color: var(--color-bg);
+            box-shadow: 0 0 20px rgba(95, 158, 160, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- The interactive particle background will be rendered here -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Main Hero Section -->
+    <main class="hero-section">
+        
+        <!-- Centered Content -->
+        <div class="content-wrapper">
+            <h1>Maple Grid</h1>
+            <p class="sub-headline">Coming Soon</p>
+
+            <!-- Optional Email Capture Form for Netlify -->
+            <form name="subscribe" method="POST" data-netlify="true" class="email-form">
+                <input 
+                    type="email" 
+                    name="email" 
+                    class="email-input" 
+                    placeholder="Enter your email" 
+                    required 
+                />
+                <button type="submit" class="submit-button">Notify Me</button>
+            </form>
+        </div>
+
+    </main>
+
+    <script>
+        // --- Interactive Particle & Maple Leaf Animation ---
+
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let particlesArray;
+
+        // Mouse position object
+        const mouse = {
+            x: null,
+            y: null,
+            radius: 150 // Area of effect for mouse interaction
+        };
+
+        window.addEventListener('mousemove', (event) => {
+            mouse.x = event.x;
+            mouse.y = event.y;
+        });
+        
+        // Reset mouse position when it leaves the window
+        window.addEventListener('mouseout', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        // Set canvas size and handle resizing
+        function setCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        setCanvasSize();
+        window.addEventListener('resize', () => {
+            setCanvasSize();
+            init(); // Re-initialize particles on resize
+        });
+
+        // Simple SVG path data for a maple leaf
+        const mapleLeafPath = new Path2D("M15.3,10.3C15.3,10.3,15.3,10.3,15.3,10.3c-0.2-0.2-0.5-0.2-0.7,0c-0.2,0.2-0.2,0.5,0,0.7l1.4,1.4c0.2,0.2,0.5,0.2,0.7,0s0.2-0.5,0-0.7L15.3,10.3z M12,1.6L9.7,7.4H3.5l5.1,4.2l-2,6.5l5.1-4.2l5.1,4.2l-2-6.5l5.1-4.2h-6.2L12,1.6z");
+        
+        // Particle class
+        class Particle {
+            constructor(x, y, directionX, directionY, size, color, isMaple = false) {
+                this.x = x;
+                this.y = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+                this.color = color;
+                this.isMaple = isMaple;
+                this.baseX = this.x; // For returning to original position
+                this.baseY = this.y;
+                this.density = (Math.random() * 30) + 1;
+            }
+
+            // Draw the particle on the canvas
+            draw() {
+                ctx.beginPath();
+                if (this.isMaple) {
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    // Scale the maple leaf path to the particle's size
+                    const scale = this.size / 24; // Original SVG is 24x24
+                    ctx.scale(scale, scale);
+                    ctx.fillStyle = this.color;
+                    ctx.fill(mapleLeafPath);
+                    ctx.restore();
+                } else {
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                }
+            }
+
+            // Update particle position and handle interactions
+            update() {
+                // Mouse interaction
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                let forceDirectionX = dx / distance;
+                let forceDirectionY = dy / distance;
+                let maxDistance = mouse.radius;
+                // Proportional force, stronger when closer
+                let force = (maxDistance - distance) / maxDistance;
+                let directionX = forceDirectionX * force * this.density;
+                let directionY = forceDirectionY * force * this.density;
+
+                if (distance < mouse.radius) {
+                    this.x -= directionX;
+                    this.y -= directionY;
+                } else {
+                    // Return to base position if not near mouse
+                    if (this.x !== this.baseX) {
+                        let dx = this.x - this.baseX;
+                        this.x -= dx / 10;
+                    }
+                    if (this.y !== this.baseY) {
+                        let dy = this.y - this.baseY;
+                        this.y -= dy / 10;
+                    }
+                }
+
+                // Move particle
+                this.x += this.directionX;
+                this.y += this.directionY;
+
+                // Wall collision
+                if (this.x + this.size > canvas.width || this.x - this.size < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y + this.size > canvas.height || this.y - this.size < 0) {
+                    this.directionY = -this.directionY;
+                }
+
+                this.draw();
+            }
+        }
+
+        // Create particle array
+        function init() {
+            particlesArray = [];
+            let numberOfParticles = (canvas.height * canvas.width) / 9000;
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 3) + 1;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                let directionX = (Math.random() * 0.4) - 0.2;
+                let directionY = (Math.random() * 0.4) - 0.2;
+                let color = getComputedStyle(document.documentElement).getPropertyValue('--color-particle').trim();
+                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+            }
+            // Add a few special maple leaf particles
+            for (let i = 0; i < 5; i++) {
+                 let size = (Math.random() * 15) + 10;
+                 let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                 let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                 let directionX = (Math.random() * 0.2) - 0.1;
+                 let directionY = (Math.random() * 0.2) - 0.1;
+                 let color = getComputedStyle(document.documentElement).getPropertyValue('--color-maple').trim();
+                 particlesArray.push(new Particle(x, y, directionX, directionY, size, color, true));
+            }
+        }
+
+        // Connect nearby particles with lines
+        function connect() {
+            let opacityValue = 1;
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x)) +
+                                 ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                    if (distance < (canvas.width / 7) * (canvas.height / 7)) {
+                        opacityValue = 1 - (distance / 20000);
+                        let lineColor = getComputedStyle(document.documentElement).getPropertyValue('--color-line').trim();
+                        // This is a workaround to set opacity on an rgba color string
+                        let colorParts = lineColor.match(/[\d.]+/g);
+                        if(colorParts.length === 4) {
+                            ctx.strokeStyle = `rgba(${colorParts[0]}, ${colorParts[1]}, ${colorParts[2]}, ${opacityValue})`;
+                        } else {
+                            ctx.strokeStyle = lineColor; // Fallback
+                        }
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, innerWidth, innerHeight);
+
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+            connect();
+        }
+
+        init();
+        animate();
+    </script>
+</body>
+</html>
